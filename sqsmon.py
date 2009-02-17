@@ -30,12 +30,24 @@ def main():
 	parser = OptionParser()
 	parser.add_option("-c", "--config", dest="configfile", help="configuration file", metavar="FILE")
 	parser.add_option("-q", "--queue", dest="queue", help="SQS queue name", metavar="NAME")
-	parser.add_option("-m", "--max", dest="max", help="maximum allowable queue length (alert if length is greater than this)", metavar="N")
+	parser.add_option("-m", "--max", dest="max", help="maximum allowable queue length (alert if length is greater than this)", metavar="N", default='100')
 	(options, args) = parser.parse_args()
 	configfile = options.configfile
 	queue = options.queue
 	max = options.max
 	
+	# Make sure queue was specified
+	if not queue:
+		print "Error: No queue specified"
+		exit(1)
+	
+	# Make sure max is a number
+	try:
+		int(max)
+	except ValueError:
+		print 'Error: "%s" does not appear to be numerical.  Argument -m (--max) expects a number.' % max
+		exit(1)
+		
 	# Parse config file
 	if configfile:
 		config = ConfigParser.ConfigParser()
@@ -45,16 +57,17 @@ def main():
 	# 1) Specified config file
 	# 2) Environment variable
 	# 3) Boto config (first "~/.boto", then "/etc/boto.cfg")
-	if boto.config.get('Credentials', 'aws_access_key_id'): aws_id = boto.config.get('Credentials', 'aws_access_key_id')
+	if configfile and config.get("Credentials", "aws_access_key_id"): aws_id = config.get("Credentials", "aws_access_key_id")
 	elif os.getenv('AWS_ACCESS_KEY_ID'): aws_id = os.getenv('AWS_ACCESS_KEY_ID')
-	elif configfile and config.get("Credentials", "aws_access_key_id"): aws_id = config.get("Credentials", "aws_access_key_id")
+	elif boto.config.get('Credentials', 'aws_access_key_id'): aws_id = boto.config.get('Credentials', 'aws_access_key_id')
+
 	else:
 		print "Error: AWS_ACCESS_KEY_ID is not defined."
 		exit(1)
-		
-	if boto.config.get('Credentials', 'aws_secret_access_key'): aws_key = boto.config.get('Credentials', 'aws_secret_access_key')
+	
+	if configfile and config.get("Credentials", "aws_secret_access_key"): aws_key = config.get("Credentials", "aws_secret_access_key")
+	elif boto.config.get('Credentials', 'aws_secret_access_key'): aws_key = boto.config.get('Credentials', 'aws_secret_access_key')
 	elif os.getenv('AWS_SECRET_ACCESS_KEY'): aws_key = os.getenv('AWS_SECRET_ACCESS_KEY')
-	elif configile and config.get("Credentials", "aws_secret_access_key"): aws_key = config.get("Credentials", "aws_secret_access_key")
 	else:
 		print "Error: AWS_SECRET_ACCESS_KEY is not defined."
 		exit(1)
@@ -63,7 +76,7 @@ def main():
 	count = get_queue_count(queue, aws_id, aws_key)
 	
 	# Compare queue length to specified max
-	if count > max:
+	if int(count) > int(max):
 		print 'Alert! Queue "%s" has %s messages in it (exceeds threshold of %s).' % (queue, count, max)
 		# do stuff
 	else:
