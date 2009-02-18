@@ -87,16 +87,11 @@ def main():
 	usage = """\nUsage: check_sqs_queue.py -q <queue name> [-w <warning threshold>] -c <critical threshold> [-n <recipient(s)>] [-f <config file] [-h]"""
 	# Parse arguments
 	parser = OptionParser()
-	parser.add_option("-f", "--config", dest="configfile", metavar="FILE", 
-						help="configuration file")
-	parser.add_option("-q", "--queue", dest="queue",  
-						help="Amazon SQS queue name (name only, not the URL)")
-	parser.add_option("-w", "--warning", dest="warn", default=None,
-						help="warning threshold")
-	parser.add_option("-c", "--critical", dest="crit", default=None, 
-						help="critical threshold")
-	parser.add_option("-n", "--notify", dest="recipients", metavar='RECIPIENT(s)', 
-						help="comma-separated list of email addresses to notify")
+	parser.add_option("-f", "--config", dest="configfile", metavar="FILE", help="configuration file")
+	parser.add_option("-q", "--queue", dest="queue", help="Amazon SQS queue name (name only, not the URL)")
+	parser.add_option("-w", "--warning", dest="warn", help="warning threshold")
+	parser.add_option("-c", "--critical", dest="crit", help="critical threshold")
+	parser.add_option("-n", "--notify", dest="recipients", metavar='RECIPIENT(s)', help="comma-separated list of email addresses to notify")
 	(options, args) = parser.parse_args()
 	configfile = options.configfile
 	queue = options.queue
