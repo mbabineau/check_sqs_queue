@@ -15,9 +15,12 @@ Created by Mike Babineau <michael.babineau@gmail.com>.
 Copyright (c) 2009 ShareThis. All rights reserved.
 """
 
-import os, ConfigParser, boto, smtplib
+import os, sys, ConfigParser, boto, smtplib
 from optparse import OptionParser
 from boto.sqs.connection import SQSConnection
+
+USAGE = """\nUsage: check_sqs_queue.py -q <queue name> [-w <warning threshold>] -c <critical threshold> [-n <recipient(s)>] [-f <config file] [-h]"""
+config = ConfigParser.ConfigParser()
 
 def validate_thresholds(warn, crit):
 	"""Perform sanity checks on threshold values"""
@@ -27,12 +30,12 @@ def validate_thresholds(warn, crit):
 			int(i[1])
 		except ValueError:
 			print 'Error: "%s" does not appear to be numeric.  Argument "%s" expects a number.' % (i[1], i[0])
-			exit(3)
+			sys.exit(3)
 	
 	if int(warn) > int(crit):
 		print 'Error: Warning threshold %s exceeds critical threshold %s.' % (warn, crit)
-		print usage
-		exit(3)
+		print USAGE
+		sys.exit(3)
 		
 def get_queue_count(queue, aws_id, aws_key):
 	"""Count the number of messages in a queue"""
@@ -42,8 +45,8 @@ def get_queue_count(queue, aws_id, aws_key):
 		q = conn.create_queue(queue)
 	else:
 		print 'Error: Queue "%s" does not exist.' % queue 
-		print usage
-		exit(3)
+		print USAGE
+		sys.exit(3)
 	
 	count = q.count()
 	return count
@@ -52,9 +55,9 @@ def get_config(section, option):
 	try:
 		config.get(section, option)
 	except (ConfigParser.NoSectionError, ConfigParser.NoOptionError, NameError):
-		print 'Error: Config option "%s" not defined.' % option
-		print usage
-		exit(3)
+		print 'Error: Option "%s" not defined in configuration file.' % option
+		print USAGE
+		sys.exit(3)
 	else:
 		return config.get(section, option)
 
@@ -83,8 +86,6 @@ def alert_by_email(queue, count, recipients):
 	server.quit()
 
 def main():
-	global usage
-	usage = """\nUsage: check_sqs_queue.py -q <queue name> [-w <warning threshold>] -c <critical threshold> [-n <recipient(s)>] [-f <config file] [-h]"""
 	# Parse arguments
 	parser = OptionParser()
 	parser.add_option("-f", "--config", dest="configfile", metavar="FILE", help="configuration file")
@@ -101,8 +102,8 @@ def main():
 	
 	if not crit:
 		print "Error: No critical threshold specified."
-		print usage
-		exit(3)
+		print USAGE
+		sys.exit(3)
 	
 	if not warn:
 		warn = crit
@@ -112,13 +113,11 @@ def main():
 	
 	if not queue:
 		print "Error: No queue specified."
-		print usage
-		exit(3)
+		print USAGE
+		sys.exit(3)
 		
 	# Parse config file
 	if configfile:
-		global config
-		config = ConfigParser.ConfigParser()
 		config.read(configfile)
 
 	# Set aws_id and aws_key according to first match in:
@@ -135,8 +134,8 @@ def main():
 		elif boto.config.get('Credentials', 'aws_access_key_id'): aws_id = boto.config.get('Credentials', 'aws_access_key_id')
 		else:
 			print "Error: AWS_ACCESS_KEY_ID is not defined."
-			print usage
-			exit(3)
+			print USAGE
+			sys.exit(3)
 
 	try:
 		aws_key = config.get("AWS", "aws_secret_access_key")
@@ -148,21 +147,21 @@ def main():
 		elif boto.config.get('Credentials', 'aws_secret_access_key'): aws_key = boto.config.get('Credentials', 'aws_secret_access_key')
 		else:
 			print "Error: AWS_SECRET_ACCESS_KEY is not defined."
-			print usage
-			exit(3)
+			print USAGE
+			sys.exit(3)
 
 	# Get queue length, compare to thresholds, and take appropriate action
 	count = get_queue_count(queue, aws_id, aws_key)
 	if int(count) < int(warn):
 		print 'Queue OK: "%s" contains %s messages' % (queue, count)
-		exit(0)
+		sys.exit(0)
 	elif int(count) >= int(crit):
 		if recipients: alert_by_email(queue, count, recipients)
 		print 'Queue CRITICAL: "%s" contains %s messages' % (queue, count)
-		exit(2)
+		sys.exit(2)
 	else:
 		print 'Queue WARNING: "%s" contains %s messages' % (queue, count)
-		exit(1)
+		sys.exit(1)
 	
 if __name__ == '__main__':
 	main()
