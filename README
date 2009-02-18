@@ -1,0 +1,41 @@
+check_sqs_queue.py
+
+Nagios plugin for checking the length of an Amazon SQS queue.  This can also be run as a 
+stand-alone monitoring script and email recipients directly.
+
+Requirements:
+-boto, a Python interface for Amazon Web Services (http://code.google.com/p/boto/).
+-AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY, read in from same-named environment 
+variables, from boto.cfg (see boto manual), or from a specified config file (see README).
+
+Created by Mike Babineau <michael.babineau@gmail.com>.
+Copyright (c) 2009 ShareThis. All rights reserved.
+
+------------------
+Usage: check_sqs_queue.py -q <queue name> [-w <warning threshold>] -c <critical threshold> [-n <recipient(s)>] [-f <config file] [-h]
+
+Options:
+  -h, --help            show this help message and exit
+  -f FILE, --config=FILE
+                        configuration file
+  -q QUEUE, --queue=QUEUE
+                        Amazon SQS queue name (name only, not the URL)
+  -w WARN, --warning=WARN
+                        warning threshold
+  -c CRIT, --critical=CRIT
+                        critical threshold
+  -n RECIPIENT(s), --notify=RECIPIENT(s)
+                        comma-separated list of email addresses to notify
+
+
+Configuration file example:
+------------------
+[AWS]
+aws_access_key_id = 123456790ABCDEFGHIJ
+aws_secret_access_key = 0987654321ZXYWVUTSRQPO123456789
+
+[SMTP]
+smtp_server = smtp.gmail.com
+smtp_port = 587
+smtp_user = user@example.com
+smtp_password = cleverpassword
