@@ -4,9 +4,9 @@ Nagios plugin for checking the length of an Amazon SQS queue.  This can also be 
 stand-alone monitoring script and email recipients directly.
 
 Requirements:
--boto, a Python interface for Amazon Web Services (http://code.google.com/p/boto/).
+-boto, a Python interface for Amazon Web Services (http://code.google.com/p/boto/)
 -AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY, read in from same-named environment 
-variables, from boto.cfg (see boto manual), or from a specified config file (see README).
+variables, from boto.cfg (see boto manual), or from a specified config file (see README)
 
 Created by Mike Babineau <michael.babineau@gmail.com>.
 Copyright (c) 2009 ShareThis. All rights reserved.
