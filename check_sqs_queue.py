@@ -37,17 +37,17 @@ def validate_thresholds(warn, crit):
 		print USAGE
 		sys.exit(3)
 		
-def get_queue_count(queue, aws_id, aws_key):
+def get_queue_count(queue, aws_id, aws_key, aws_region=None):
 	"""Count the number of messages in a queue"""
 	# Create connection to specified queue
-	conn = boto.connect_sqs(aws_id, aws_key)
-	if conn.get_queue(queue):
-		q = conn.create_queue(queue)
-	else:
+	if (aws_region): conn = boto.sqs.connect_to_region(aws_region, aws_access_key_id=aws_id, aws_secret_access_key=aws_key)
+	else: conn = boto.connect_sqs(aws_id, aws_key, region=aws_region)
+	q = conn.get_queue(queue)
+	if not q:
 		print 'Error: Queue "%s" does not exist.' % queue 
 		print USAGE
 		sys.exit(3)
-	
+
 	count = q.count()
 	return count
 
@@ -150,8 +150,18 @@ def main():
 			print USAGE
 			sys.exit(3)
 
-	# Get queue length, compare to thresholds, and take appropriate action
-	count = get_queue_count(queue, aws_id, aws_key)
+	try:
+		aws_region = config.get("AWS", "aws_region")
+	except (ConfigParser.NoSectionError, ConfigParser.NoOptionError, NameError):
+		aws_region = None
+
+	if not aws_region:
+	    if os.getenv('AWS_REGION'): aws_region = os.getenv('AWS_REGION')
+
+    # Get queue length, compare to thresholds, and take appropriate action
+	if aws_region: count = get_queue_count(queue, aws_id, aws_key, aws_region)
+	else: count = get_queue_count(queue, aws_id, aws_key)
+
 	if int(count) < int(warn):
 		print 'Queue OK: "%s" contains %s messages' % (queue, count)
 		sys.exit(0)
